@@ -1,0 +1,7 @@
+dnspython
+google-auth
+google-oauth
+python-dotenv
+python-json-logger
+requests
+pyyaml
