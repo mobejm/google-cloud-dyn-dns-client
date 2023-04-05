@@ -59,19 +59,26 @@ This is a Python DynDNS client for [google-cloud-function-dyn-dns](https://githu
     ```
 1. Create an `.env` file with the following environment variables (please change them accordingly):
     ```
+    ZONE_NAME=domain-com
+    ZONE_DNS_NAME=domain.com.
     DYN_DNS_API_URL=https:/{region}-{project}.cloudfunctions.net/{function-name}
-    DNS_DOMAIN=domain.com.
+    HOSTNAME=test.domain.com.
     GOOGLE_APPLICATION_CREDENTIALS=/path/to/auth/file.json
     DNS_RECORD_DEFAULT_TTL=300
     PUBLIC_IP_CHECK_INTERVAL_SEC=300
     ```
-
+1. Run the tests:
+    ```
+    python3 -m unittest tests/*
+    ```
 ## 3. Configuration
 
 | Variable                       | Description |
 | ------------------------------ | ----------- |
 | GOOGLE_APPLICATION_CREDENTIALS | Path to the key file for the service account to be used to call the DynDNS Google Cloud Function. |
+| ZONE_NAME                      | Name of the Zone as shown in Google Cloud |
+| ZONE_DNS_NAME                  | DNS Name of the Zone as shown in Google Cloud |
 | DYN_DNS_API_URL                | URL for the DynDNS Google Cloud Function |
-| DNS_DOMAIN                     | DNS name of the record to be updated |
+| HOSTNAME                       | DNS name of the record to be updated |
 | DNS_RECORD_DEFAULT_TTL         | This defines how often the script will perform a DNS query to obtain the curren Public IP assigned to the DNS name |
 | PUBLIC_IP_CHECK_INTERVAL_SEC   | Defines how often the script will call one of the free third-party APIs to obtain the Public IP |
