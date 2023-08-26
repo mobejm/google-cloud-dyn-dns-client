@@ -49,7 +49,7 @@ PUBLIC_IP_SOURCES = [
 ]
 
 
-def _get_ip_with_re(self, response_payload: str, exp: re.Pattern) -> str:
+def _get_ip_with_re(response_payload: str, exp: re.Pattern) -> str:
     match = exp.search(response_payload)
     if match is None:
         return None

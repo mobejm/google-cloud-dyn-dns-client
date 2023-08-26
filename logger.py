@@ -3,7 +3,7 @@ import os
 import yaml
 import sys
 
-default_logging_config = "logging.yaml"
+default_logging_config = os.environ.get("LOGGING_CONFIG_PATH", "logging.yaml")
 default_config = {
     "version": 1,
     "disable_existing_loggers": False,

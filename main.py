@@ -15,6 +15,8 @@ def dyn_dns_client() -> None:
     app_config = Config()
     public_ip_provider = publicip.MyPublicIP(public_ip_sources=PUBLIC_IP_SOURCES)
     dyn_dns_client = dyndnsclient.DynDnsClient(
+        zone_name=app_config.zone_name,
+        zone_dns_name=app_config.zone_dns_name,
         dyn_dns_api_url=app_config.api_url,
         hostname=app_config.hostname,
         dns_cache_ttl_sec=app_config.dns_record_ttl_sec,

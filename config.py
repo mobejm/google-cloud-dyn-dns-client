@@ -12,7 +12,7 @@ class Config:
         logger.info("Loading the application configuration from environment.")
         if os.path.isfile(".env"):
             logger.info("An .env file was found.")
-            env_path = os.Path(".") / ".env"
+            env_path = os.path.join(".", ".env")
             dotenv.load_dotenv(dotenv_path=env_path)
 
         # Mandatory environment variables
@@ -23,8 +23,8 @@ class Config:
         self.auth_key_file_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
 
         # Optional settings
-        self.dns_record_ttl_sec = os.environ.get("DNS_RECORD_DEFAULT_TTL", 300)
-        self.interval_sec = os.environ.get("PUBLIC_IP_CHECK_INTERVAL_SEC", 300)
+        self.dns_record_ttl_sec = int(os.environ.get("DNS_RECORD_DEFAULT_TTL", 300))
+        self.interval_sec = int(os.environ.get("PUBLIC_IP_CHECK_INTERVAL_SEC", 300))
 
         if self.api_url is None:
             logger.error("DYN_DNS_API_URL environment variable is missing.")

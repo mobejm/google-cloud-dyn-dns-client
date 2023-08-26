@@ -36,9 +36,14 @@ class DynDnsClient:
             self._dns_resolver = dns_resolver
 
         def resolve(self, dns_name: str) -> IPv4Address:
-            answer = self._dns_resolver.resolve(
-                qname=dns_name, rdtype=dns.rdatatype.A, raise_on_no_answer=True
-            )
+            try:
+                answer = self._dns_resolver.resolve(
+                    qname=dns_name, rdtype=dns.rdatatype.A, raise_on_no_answer=True
+                )
+            except dns.resolver.NXDOMAIN as ex:
+                logger.warn(f"DNS A record for {dns_name} doesn't exist. This can be ignored when running this tool for the first time.")
+                return None
+
             rrset = [record.to_text() for record in answer.rrset]
 
             if len(rrset) > 1:
@@ -148,8 +153,8 @@ class DynDnsClient:
         )
         ipv4 = self._dns_resolver.resolve(dns_name=dns_name)
         logger.info(
-            f"Obtained IP address: {ipv4.exploded}.",
-            extra={"dns_response": 1, "ip": ipv4.exploded},
+            f"Obtained IP address: {ipv4.exploded if ipv4 is IPv4Address else ipv4}.",
+            extra={"dns_response": 1, "ip": ipv4.exploded if ipv4 is IPv4Address else ipv4},
         )
         return ipv4
 
