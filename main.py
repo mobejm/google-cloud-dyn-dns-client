@@ -2,6 +2,8 @@ import dyndnsclient
 import logger
 import logging
 import logging.config
+import os
+import platform
 import publicip
 import time
 
@@ -22,13 +24,30 @@ def dyn_dns_client() -> None:
         dns_cache_ttl_sec=app_config.dns_record_ttl_sec,
     )
 
+    if app_config.pid_file_path is not None:
+        with open(app_config.pid_file_path, "w", encoding="utf-8") as f:
+            f.write(str(os.getpid()))
+
     while True:
+
+        success = True
+        logger.info(f"Checking for Public IP changes.", extra={"metric": "dyndns.count", "value": 1})
+
         try:
             public_ip = public_ip_provider.get_my_public_ip()
             if public_ip:
-                dyn_dns_client.update_dns_record(ipv4=public_ip)
+                success = dyn_dns_client.update_dns_record(ipv4=public_ip)
+            else:
+                success = False
         except Exception as e:
+            success = False
             logger.exception(e)
+
+        if success:
+            logger.info(f"Successfully checked for Public IP changes and made DNS updates if needed.", extra={"metric": "dyndns.success", "value": 1})
+        else:
+            logger.error(f"Failed to chceck for Public IP changes and/or perform corresponding DNS updates.", extra={"metric": "dyndns.error", "value": 1})
+
         logger.info(f"Sleeping for {app_config.interval_sec} seconds.")
         time.sleep(app_config.interval_sec)
 

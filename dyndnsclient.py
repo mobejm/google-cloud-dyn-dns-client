@@ -8,7 +8,7 @@ import json
 import logging
 import requests
 
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
 from ipaddress import ip_address, IPv4Address
 from typing import Dict
 
@@ -16,13 +16,15 @@ logger = logging.getLogger(__name__)
 
 
 class DnsResolver(ABC):
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def resolve(dns_name: str) -> IPv4Address:
         pass
 
 
 class AuthHelper(ABC):
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def authenticate(headers: Dict[str, str]) -> None:
         pass
 
@@ -125,8 +127,8 @@ class DynDnsClient:
         self._dns_resolver = dns_resolver
         self._auth_helper = auth_helper
 
-    def update_dns_record(self, ipv4: IPv4Address) -> None:
-        now = datetime.datetime.utcnow().timestamp()
+    def update_dns_record(self, ipv4: IPv4Address) -> bool:
+        now = datetime.datetime.now(datetime.UTC).timestamp()
         if (now - self._last_dns_query_timestamp) >= self._dns_cache_ttl_sec:
             logger.info(f"Local DNS cache for {self._hostname} has expired.")
             self._current_ip = self._query_dns(dns_name=self._hostname)
@@ -134,7 +136,7 @@ class DynDnsClient:
 
         if self._current_ip == ipv4:
             logger.info(f"The Public IP has not changed.", extra={"ip_change": 0})
-            return
+            return True
 
         logger.info(
             f"The Public IP has changed from {self._current_ip} to {ipv4}",
@@ -145,6 +147,8 @@ class DynDnsClient:
 
         if success:
             self._current_ip = ipv4
+
+        return success
 
     def _query_dns(self, dns_name: str) -> IPv4Address:
         logger.info(

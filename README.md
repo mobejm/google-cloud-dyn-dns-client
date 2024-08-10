@@ -69,7 +69,7 @@ This is a Python DynDNS client for [google-cloud-function-dyn-dns](https://githu
     ```
 1. Run the tests:
     ```
-    python3 -m unittest tests/*
+    python3 -m unittest tests/test_*
     ```
 ## 3. Configuration
 
@@ -82,3 +82,4 @@ This is a Python DynDNS client for [google-cloud-function-dyn-dns](https://githu
 | HOSTNAME                       | DNS name of the record to be updated |
 | DNS_RECORD_DEFAULT_TTL         | This defines how often the script will perform a DNS query to obtain the curren Public IP assigned to the DNS name |
 | PUBLIC_IP_CHECK_INTERVAL_SEC   | Defines how often the script will call one of the free third-party APIs to obtain the Public IP |
+| PID_FILE_PATH                  | If defined, a PID file will be created in the specified location |

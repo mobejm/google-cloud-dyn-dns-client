@@ -98,13 +98,19 @@ class PublicIpSource:
         self._last_poll_timestamp = now
         self._next_poll_timestamp = now + self._ttl_sec
 
+        response = None
+
         try:
+            logger.info(
+                f"Making request to obtain Public IP address from {self._name}",
+                extra={"metric": "get_my_public_ip.request.count", "value": 1, "source": self._name}
+            )
             response = requests.get(self._api_url, timeout=5)
             response.raise_for_status()
         except requests.exceptions.RequestException as re:
             self._consecutive_error_count += 1
             logger.exception(re)
-            if response.status_code == 429:
+            if response is not None and response.status_code == 429:
                 # We've been throttled! (╯°□°）╯︵ ┻━┻
                 self._consecutive_http_429_count += 1
                 self._consecutive_http_error_count = 0
@@ -114,13 +120,15 @@ class PublicIpSource:
                 )
                 self._next_poll_timestamp = now + self._ttl_sec + back_off_time
                 logger.warning(
-                    f"Got a HTTP 429. Backing off for {back_off_time} seconds."
+                    f"Got a HTTP 429. Backing off for {back_off_time} seconds.",
+                    extra={"metric": "get_my_public_ip.request.error", "value": 1, "source": self._name}
                 )
             else:
                 self._consecutive_http_429_count = 0
                 self._consecutive_http_error_count += 1
                 logger.warning(
-                    f"The request failed with a {type(re).__name__} exception. Error message: {re.strerror}"
+                    f"The request failed with a {type(re).__name__} exception. Error message: {re.strerror}",
+                    extra={"metric": "get_my_public_ip.request.error", "value": 1, "source": self._name}
                 )
             self._check_for_expiration(now)
             return None
@@ -135,12 +143,15 @@ class PublicIpSource:
             ip_address_str = self._get_ip_routine(response.text)
             logger.info(
                 f"Obtained IP address {ip_address_str} from {self._name}",
-                extra={"ip_address": ip_address_str, "source": self._api_url},
+                extra={"metric": "get_my_public_ip.request.success", "value": 1, "ip_address": ip_address_str, "source": self._name}
             )
         except Exception as e:
             self._consecutive_error_count += 1
             logger.exception(e)
-            logger.error("Failed to obtain Public IP address from response payload.")
+            logger.error(
+                "Failed to obtain Public IP address from response payload.",
+                extra={"metric": "get_my_public_ip.request.error", "value": 1, "source": self._name}
+            )
             self._check_for_expiration(now)
             return None
 
@@ -148,10 +159,17 @@ class PublicIpSource:
             ip = ip_address(ip_address_str)
             if not ip.is_global or type(ip) is not IPv4Address:
                 raise ValueError
+            logger.info(
+                f"Obtained valid IPv4 address {ip_address_str} from {self._name}",
+                extra={"metric": "get_my_public_ip.payload.success", "value": 1, "ip_address": ip_address_str, "source": self._name}
+            )
         except ValueError as e:
             self._consecutive_error_count += 1
             logger.exception(e)
-            logger.error("The IP address obtained is not a valid public IPv4 address.")
+            logger.error(
+                "The IP address obtained is not a valid public IPv4 address.",
+                extra={"metric": "get_my_public_ip.payload.error", "value": 1, "ip_address": ip_address_str, "source": self._name}
+            )
             self._check_for_expiration(now)
             return None
 
@@ -183,6 +201,10 @@ class MyPublicIP:
             next_ip_source = self._get_next_ip_source()
             if next_ip_source is None:
                 logger.error("Could not find a Public IP API with an expired TTL.")
+                logger.error(
+                    "Failed to perform Public IP lookup.",
+                    extra={"metric": "get_my_public_ip.error", "value": 1}
+                )
                 return None
             else:
                 logger.info(
